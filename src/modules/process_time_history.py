@@ -1,6 +1,6 @@
 import pandas as pd
-from src.combinedLoading import calculate_load_terms, calculate_capacity_parameters, calculate_utilization_factor_G0
-from src.PointLoad import calculate_utilization_g_hat
+from modules.combinedLoading import calculate_load_terms, calculate_capacity_parameters, calculate_utilization_factor_G0
+from modules.PointLoad import calculate_utilization_g_hat
 
 
 # Constants
@@ -90,7 +90,7 @@ def process_time_history_g_hat(th_df, pipe_info, th_df_derived) -> pd.DataFrame:
 
     org_columns = th_df.columns.tolist()
 
-    th_df = th_df.assign(Ry_kN = 3.9 * pipe_info['YS'] * pipe_info['WT']**2 / 1000) # default is inplace = False, so this creates a new dataframe with the new column, which is what we want here to avoid modifying the original dataframe 
+    th_df = th_df.assign(Ry_kN = 3.9 * pipe_info['YS'] * pipe_info['WT']**2 / 1000) # default is inplace = False, so this creates a new dataframe with the new column, which is what we want here to avoid modifying the original dataframe
 
     #th_df['Ry_kN'] = 3.9 * pipe_info['YS'] * pipe_info['WT']**2 / 1000
     th_df['Q_kN'] = 2 * th_df['Wire force']                         # multiply by 2 to get total force on pipe, not just force on one side

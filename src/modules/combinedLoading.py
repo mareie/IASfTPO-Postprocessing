@@ -1,4 +1,3 @@
-from click import Tuple
 import pandas as pd
 import math
 
@@ -56,7 +55,7 @@ def calculate_load_terms(df: pd.DataFrame, pipe_info) -> pd.DataFrame:
     """
     org_columns = df.columns.tolist()
 
-    df = df.assign(Mload = df['Moment']) # default is inplace = False, so this creates a new dataframe with the new column, which is what we want here to avoid modifying the original dataframe 
+    df = df.assign(Mload = df['Moment']) # default is inplace = False, so this creates a new dataframe with the new column, which is what we want here to avoid modifying the original dataframe
 
     df['M/Mp'] = df['Mload'] / pipe_info['Mp']
     df['M/Mpc'] = df['Mload'] / pipe_info['Mpc']

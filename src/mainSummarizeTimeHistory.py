@@ -16,8 +16,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import datetime
 
-from src.readAndWrite import get_input_from_args_or_dialog, check_input_and_get_files
-from src.utils import read_in_csv_results, write_to_csv, extract_info_from_name
+from utils.readAndWrite import get_input_from_args_or_dialog, check_input_and_get_files
+from utils.utils import read_in_csv_results, write_to_csv, extract_info_from_name
 
 from scipy.signal import find_peaks, step
 
