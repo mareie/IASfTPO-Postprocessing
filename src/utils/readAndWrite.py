@@ -53,6 +53,10 @@ def get_input_from_args_or_dialog(default_folder):
 
 
 def check_input_and_get_files(input_path_or_files, outName):
+    """
+    Check if the input is a folder or a list of files. If it's a folder,
+    filter the files based on the exclusion and inclusion criteria. If it's a list of files, return them directly.
+    """
     if isinstance(input_path_or_files, (list, tuple)):
         filtered_files = list(input_path_or_files)
         if not filtered_files:
