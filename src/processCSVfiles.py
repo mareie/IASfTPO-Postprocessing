@@ -14,9 +14,10 @@ import os
 # import copy
 import re
 import numpy as np
-import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 import pandas as pd
 import datetime
+from plotly.subplots import make_subplots
 
 from utils.readAndWrite import get_input_from_args_or_dialog, check_input_and_get_files
 from utils.utils import write_to_csv, extract_info_from_name
@@ -29,57 +30,28 @@ debug = False
 
 def main(input_path_or_files):
     outName = datetime.datetime.now().strftime("%Y-%m-%d") + ".csv"
-    current_folder = os.getcwd()
 
     filtered_files = check_input_and_get_files(input_path_or_files, outName)
+    list_of_csvs = [CsvData.from_file(os.path.join(file)) for file in filtered_files]
 
-    out_csv = os.path.join(current_folder, outName)
-    out_df = pd.DataFrame()
-    list_of_csvs =[]
-    for file in filtered_files:
-
-        csv_data = CsvData.from_file(os.path.join(file))
-        # df = csv_data.df
-        # process_csv_files_in_folder(csv_data)
-        list_of_csvs.append(csv_data)
+    out_df =process_csv_files_in_folder(list_of_csvs)
 
 
-
-    process_csv_files_in_folder(list_of_csvs)
+    # current_folder = os.getcwd()
+    # out_csv = os.path.join(current_folder, outName)
     # out_df = out_df.sort_values(by=['D/t', 'Qh', 'YS', 'TS', 'WT', 'lf', 'af', 'T Ratio', 'RestartID'])
     # write_to_csv(out_csv, out_df)
 
     print("Done")
 
 
-def process_csv_file_in_folder(csv_data) -> pd.DataFrame:
-    thr = 1.0
-    df = csv_data.df
-    step = df[df["Step name"] == "Trawl"]
 
-    peaks, _ = find_peaks(step["Moment"], height=thr)
-    dips, _ = find_peaks(-step["Moment"], height=thr)
-
-    events = np.sort(np.r_[peaks, dips])
-
-    # mask = (step.loc[events, 'KP'] > 6) & (step.loc[events, 'KP'] < 6.6)
-
-    # step.iloc[events][(step["KP"] > 6) & (step["KP"] < 6.8)][["KP", "Node label"]]
-    plot_results(step["StepTime"], step["Moment"], csv_data.metadata, events)
-
-    # ind = step.iloc[events][(step["KP"] > 6) & (step["KP"] < 6.8)][
-    #     ["KP", "Node label"]
-    # ].index[1]
-    plt.show()
-    print("hei")
-
-    return pd.DataFrame()
 
 def process_csv_files_in_folder(list_of_csvs) -> pd.DataFrame:
     out_df = pd.DataFrame()
-    fig, ax = plt.subplots(nrows=3, ncols=1, figsize=(10, 6))
+    fig = make_subplots(rows=3, cols=1, vertical_spacing=0.08)
     for csv_data in list_of_csvs:
-        thr = 1.0
+        thr = None
         df = csv_data.df
         step = df[df["Step name"] == "Trawl"]
 
@@ -88,26 +60,16 @@ def process_csv_files_in_folder(list_of_csvs) -> pd.DataFrame:
 
         events = np.sort(np.r_[peaks, dips])
 
-        # mask = (step.loc[events, 'KP'] > 6) & (step.loc[events, 'KP'] < 6.6)
+        plot_results(fig, step["Displacement"], step["End1 RF1 Force"], csv_data.metadata, csv_data.sim_info, events, row=1, col=1)
+        plot_results(fig, step["Wire force"], step["Moment"], csv_data.metadata, csv_data.sim_info, events, row=2, col=1)
+        plot_results(fig, step["ESF1"], step["Moment"], csv_data.metadata, csv_data.sim_info, events, row=3, col=1)
 
-        # step.iloc[events][(step["KP"] > 6) & (step["KP"] < 6.8)][["KP", "Node label"]]
-        plot_results(ax[0], step["Displacement"], step["End1 RF1 Force"], csv_data.metadata, csv_data.sim_info, events)
+        line_of_peak = step.iloc[events].copy()
+        line_of_peak["ODB name"] = csv_data.sim_info["ODB name"]
 
-        thr = 1.0
-
-        plot_results(ax[1], step["Wire force"], step["Moment"], csv_data.metadata, csv_data.sim_info, events)
-        plot_results(ax[2], step["ESF1"], step["Moment"], csv_data.metadata, csv_data.sim_info, events)
-
-
-
-        out_df = pd.concat([out_df, pd.DataFrame()])
-    ax[0].legend(loc="best")
-    ax[1].legend(loc="best")
-    ax[2].legend(loc="best")
-    ax[0].grid()
-    ax[1].grid()
-    ax[2].grid()
-    plt.show()
+        out_df = pd.concat([out_df, line_of_peak])
+    fig.update_layout(height=1600, width=1600)
+    fig.show()
 
     return out_df
 
@@ -132,23 +94,79 @@ def extract_and_rename_peaks_to_dataframe(df, peak_indices, governing=False):
     return peaks_df
 
 
-def plot_results(ax, x, y, md, sim_info, peaks):
+def plot_results(fig, x, y, md, sim_info, peaks, row=None, col=None):
 
-    ax.plot(x, y, label=f"{sim_info['ODB name'].rsplit('_Main')[0]}")
+    trace_name = f"{sim_info['ODB name'].rsplit('_Main')[0]}"
+    trace = go.Scatter(
+        x=x,
+        y=y,
+        mode="lines",
+        name=trace_name,
+        legendgroup=trace_name,
+        showlegend=row is None or row == 1,
+    )
+    if row is None or col is None:
+        fig.add_trace(trace)
+    else:
+        fig.add_trace(trace, row=row, col=col)
+
     for peak in peaks:
-        ax.annotate(
-            f"y: {y.iloc[peak]:.2f}",
-            (x.iloc[peak], y.iloc[peak]),
-            textcoords="offset points",
-            xytext=(0, 10),
-            ha="center",
+        annotation = {
+            "x": x.iloc[peak],
+            "y": y.iloc[peak],
+            "text": f"y: {y.iloc[peak]:.0f}",
+            "showarrow": False,
+            "yshift": 10,
+        }
+        if row is None or col is None:
+            fig.add_annotation(annotation)
+        else:
+            fig.add_annotation(annotation, row=row, col=col)
+
+    peak_trace = go.Scatter(
+        x=x.iloc[peaks],
+        y=y.iloc[peaks],
+        mode="markers",
+        marker={"color": "red"},
+        name="Peaks",
+        showlegend=False,
+    )
+    if row is None or col is None:
+        fig.add_trace(peak_trace)
+        fig.update_layout(
+            xaxis_title=f'{md[x.name]["description"]}',
+            yaxis_title=f'{md[y.name]["description"]}',
+            title=f"{x.name} vs {y.name}",
         )
-    ax.scatter(x.iloc[peaks], y.iloc[peaks], color="red")
-    ax.set_xlabel(f'{md[x.name]["description"]}')
-    ax.set_ylabel(f'{md[y.name]["description"]}')
-    ax.set_title(f"{x.name} vs {y.name}")
+    else:
+        fig.add_trace(peak_trace, row=row, col=col)
+        fig.update_xaxes(title_text=f'{md[x.name]["description"]}', row=row, col=col)
+        fig.update_yaxes(title_text=f'{md[y.name]["description"]}', row=row, col=col)
 
 
+def process_csv_file_in_folder(csv_data) -> pd.DataFrame:
+    thr = 1.0
+    df = csv_data.df
+    step = df[df["Step name"] == "Trawl"]
+
+    peaks, _ = find_peaks(step["Moment"], height=thr)
+    dips, _ = find_peaks(-step["Moment"], height=thr)
+
+    events = np.sort(np.r_[peaks, dips])
+
+    # mask = (step.loc[events, 'KP'] > 6) & (step.loc[events, 'KP'] < 6.6)
+
+    # step.iloc[events][(step["KP"] > 6) & (step["KP"] < 6.8)][["KP", "Node label"]]
+    fig = go.Figure()
+    plot_results(fig, step["StepTime"], step["Moment"], csv_data.metadata, csv_data.sim_info, events)
+
+    # ind = step.iloc[events][(step["KP"] > 6) & (step["KP"] < 6.8)][
+    #     ["KP", "Node label"]
+    # ].index[1]
+    fig.show()
+    print("hei")
+
+    return pd.DataFrame()
 
 
 if __name__ == "__main__":
@@ -159,7 +177,3 @@ if __name__ == "__main__":
         print("No input selected. Exiting.")
     else:
         main(selected_input)
-
-
-
-
