@@ -29,7 +29,7 @@ def main(input_path_or_files):
     outName = datetime.datetime.now().strftime("%Y-%m-%d") + "_summary_Mmax" ".csv"
 
     filtered_files = check_input_and_get_files(input_path_or_files, outName)
-    list_of_csvs = [CsvData.from_file(os.path.join(file)) for file in filtered_files]
+    list_of_csvs = [CsvData.from_file(file) for file in filtered_files]
 
     out_df = process_csv_files_in_folder(list_of_csvs)
 
@@ -59,7 +59,7 @@ def process_csv_files_in_folder(list_of_csvs) -> pd.DataFrame:
     return summary_df
 
 
-def process_csv_file_in_folder(csv_data) -> pd.DataFrame:
+def process_csv_file_in_folder(csv_data, savefile=False) -> pd.DataFrame:
     """ Selects the rows at the peaks and dips of the 'Moment' column within the 'Trawl' step of the CSV data.
     Returns the line at the peaks and dips of the 'Moment' column within the 'Trawl' step. """
 
@@ -79,14 +79,21 @@ def process_csv_file_in_folder(csv_data) -> pd.DataFrame:
         index=line_at_peak.index,
     )
     return_line = pd.concat([info_df, line_at_peak], axis=1)
-    csv_data.write_to_csv = return_line
+
+
+    if savefile:
+        outname = csv_data.filepath.stem + "_processed.csv"
+        outpath = os.path.join(csv_data.filepath.parent, "processed")  # Ensure the file path is available
+        csv_data.save_to_csv(os.path.join(outpath, outname))
+
+
     return return_line
 
 
 
 
 def add_general_info_from_file_name(csv_data):
-    clean_file_name = csv_data.header_info["ODB name"].rsplit("_Main")[0]
+    clean_file_name = csv_data.filepath.name.rsplit("_Main")[0]
     general_info = extract_info(clean_file_name)
     general_info["Sim ID"] = clean_file_name
     csv_data.add_general_info(**general_info)

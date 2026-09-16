@@ -4,27 +4,26 @@ import pandas as pd
 
 
 class CsvData:
-    def __init__(self, df, filename=None, metadata=None, header_info=None, general_info=None):
+    def __init__(self, df, filepath=None, metadata=None, header_info=None, general_info=None):
         self.df = df
-        self.filename = filename
+        self.filepath = Path(filepath) if filepath else None
         self.metadata = metadata
         self.header_info = header_info
         self.general_info = general_info or {}
 
     @classmethod
     def from_file(cls, filepath, sep=";", headers=True):
-        filename = Path(filepath).name
         if not headers:
             df = cls._read_data_no_headers(filepath, sep=sep)
             metadata = {}
             header_info = {}
-            return cls(df=df, filename=filename, metadata=metadata, header_info=header_info)
+            return cls(df=df, filepath=filepath, metadata=metadata, header_info=header_info)
 
         header_info = cls._read_header_info(filepath, sep=sep)
         metadata = cls._read_metadata(filepath, sep=sep)
         df = cls._read_data(filepath, sep=sep)
 
-        return cls(df=df, filename=filename, metadata=metadata, header_info=header_info, general_info={})
+        return cls(df=df, filepath=filepath, metadata=metadata, header_info=header_info, general_info={})
 
     @staticmethod
     def _read_header_info(filepath, sep=";"):
