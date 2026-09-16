@@ -5,27 +5,19 @@ The script performs the following steps:
 1. Reads in CSV files containing time history data for trawling simulations.
 2. Extracts relevant information from the file names and CSV content, including simulation parameters and time history data.
 """
-
-
-from asyncio import events
-import sys
+import datetime
 import os
 
-# import copy
-import re
 import numpy as np
+import pandas as pd
 import plotly.graph_objects as go
 from plotly.colors import qualitative
-import pandas as pd
-import datetime
 from plotly.subplots import make_subplots
+from scipy.signal import find_peaks
 
-from utils.readAndWrite import get_input_from_args_or_dialog, check_input_and_get_files
-from utils.utils import extract_info
-from utils.utils import write_to_csv, extract_info_from_name
-
-from scipy.signal import find_peaks, step
 from modules.csv_data import CsvData
+from utils.readAndWrite import check_input_and_get_files, get_input_from_args_or_dialog
+from utils.utils import extract_info, extract_info_from_name, write_to_csv
 
 debug = False
 
