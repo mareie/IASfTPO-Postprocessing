@@ -1,7 +1,8 @@
-import sys
 import os
+import sys
 import tkinter as tk
 from tkinter import filedialog
+
 
 def get_input_from_args_or_dialog(default_folder):
     if len(sys.argv) > 1:
@@ -79,3 +80,21 @@ def check_input_and_get_files(input_path_or_files, outName):
 
 def filter_files(folder, exclusion_files, inclusion_files=None):
     return [os.path.join(folder, file) for file in os.listdir(folder) if file not in exclusion_files and (inclusion_files is None or any(inc in file for inc in inclusion_files))]
+
+
+def write_to_csv(out_csv, df, sep=";", mode="x"):
+    try:
+        df.to_csv(out_csv, index=False, sep=sep, mode=mode)
+        print("File written successfully")
+
+    except FileExistsError:
+        input(
+            "The csv file already exists. Press enter to confirm overwrite. (ctrl + c to exit script)"
+        )
+        write_to_csv(out_csv, df, sep=sep, mode="w")
+
+    except EnvironmentError:
+        input(
+            "The csv file is open, please close it and press enter. (ctrl + c to exit script)"
+        )
+        write_to_csv(out_csv, df, sep=sep, mode=mode)
