@@ -17,7 +17,7 @@ from scipy.signal import find_peaks
 
 from modules.csv_data import CsvData
 from utils.readAndWrite import check_input_and_get_files, get_input_from_args_or_dialog
-from utils.utils import extract_info, extract_info_from_name, write_to_csv
+from utils.utils import extract_info, write_to_csv
 
 debug = False
 

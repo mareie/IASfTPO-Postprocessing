@@ -1,28 +1,8 @@
-import pandas as pd
 import os
 import re
 
 
-def read_in_csv_results(in_csv):
-    return pd.read_csv(
-        in_csv,
-        header=2,
-        skiprows=[3, 4],
-        sep=";",
-    )
-
-
-def read_in_summarized_csv_results(in_csv):
-    return pd.read_csv(
-        in_csv,
-        header=0,
-        # skiprows=[3, 4],
-        sep=";",
-    )
-
-
 def extract_info(simID: str) -> dict:
-    filename = simID
     patterns = {
         "D/t": r"Dt([^_]+)",
         "Qh": r"qh([^_]+)",
@@ -48,31 +28,6 @@ def extract_info(simID: str) -> dict:
     return extracted_info
 
 
-def extract_info_from_name(file_name):
-    try:
-        if "_Main_shellResTime.csv" in file_name:
-            simId = (
-                os.path.basename(file_name)
-                .rstrip("_Main_shellResTime.csv")
-                .lstrip("processed_")
-            )
-            isRestart = False
-        elif "_Restart_shellTrawlingRes.csv" in file_name:
-            simId = (
-                os.path.basename(file_name)
-                .rstrip("_Restart_shellTrawlingRes.csv")
-                .lstrip("processed_")
-            )
-            restartId, simId = simId.split("-")
-            isRestart = True
-        else:
-            print(
-                f"File {file_name} does not match expected naming convention. Skipping."
-            )
-
-        return simId, isRestart
-    except Exception as e:
-        print(f"Error processing {file_name}: {e}")
 
 
 def write_to_csv(out_csv, df, sep=";", mode="x"):
