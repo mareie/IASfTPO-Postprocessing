@@ -2,10 +2,10 @@ import pandas as pd
 
 
 class CsvData:
-    def __init__(self, df, metadata, sim_info, general_info=None):
+    def __init__(self, df, metadata, header_info, general_info=None):
         self.df = df
         self.metadata = metadata
-        self.sim_info = sim_info
+        self.header_info = header_info
         self.general_info = general_info or {}
 
     @classmethod
@@ -13,20 +13,20 @@ class CsvData:
         if not headers:
             df = cls._read_data_no_headers(filepath, sep=sep)
             metadata = {}
-            sim_info = {}
-            return cls(df=df, metadata=metadata, sim_info=sim_info)
+            header_info = {}
+            return cls(df=df, metadata=metadata, header_info=header_info)
 
-        sim_info = cls._read_sim_info(filepath, sep=sep)
+        header_info = cls._read_header_info(filepath, sep=sep)
         metadata = cls._read_metadata(filepath, sep=sep)
         df = cls._read_data(filepath, sep=sep)
 
-        return cls(df=df, metadata=metadata, sim_info=sim_info)
+        return cls(df=df, metadata=metadata, header_info=header_info, general_info={})
 
     @staticmethod
-    def _read_sim_info(filepath, sep=";"):
-        sim_info_df = CsvData._read_csv(filepath, sep=sep, header=0, nrows=1)
-        row = sim_info_df.iloc[0]
-        return {str(col): row[col] for col in sim_info_df.columns}
+    def _read_header_info(filepath, sep=";"):
+        header_info_df = CsvData._read_csv(filepath, sep=sep, header=0, nrows=1)
+        row = header_info_df.iloc[0]
+        return {str(col): row[col] for col in header_info_df.columns}
 
     @staticmethod
     def _read_metadata(filepath, sep=";"):
@@ -75,8 +75,8 @@ class CsvData:
     def save_to_csv(self, output_path):
         cols = list(self.df.columns)
 
-        sim_header = list(self.sim_info.keys())
-        sim_values = [self.sim_info[k] for k in sim_header]
+        sim_header = list(self.header_info.keys())
+        sim_values = [self.header_info[k] for k in sim_header]
 
         info_row = [self.metadata.get(c, {}).get("info", "") for c in cols]
         desc_row = [self.metadata.get(c, {}).get("description", "") for c in cols]
