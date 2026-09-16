@@ -36,7 +36,7 @@ def main(input_path_or_files):
 
     current_folder = os.getcwd()
     out_csv = os.path.join(current_folder,'output', outName)
-    # out_df = out_df.sort_values(by=['D/t', 'Qh', 'YS', 'TS', 'WT', 'lf', 'af', 'T Ratio', 'RestartID'])
+    out_df = out_df.sort_values(by=['D/t', 'Qh', 'Ls', 'Lr'])
     write_to_csv(out_csv, out_df)
 
     print("Done")
@@ -47,38 +47,23 @@ def main(input_path_or_files):
 def process_csv_files_in_folder(list_of_csvs) -> pd.DataFrame:
     """ Processes a list of CSV data objects and generates a summary DataFrame and plots. """
     summary_df = pd.DataFrame()
-    fig = make_subplots(rows=3, cols=1, vertical_spacing=0.08)
-    colors = qualitative.Plotly
-    color_map = {}
 
     for csv_data in list_of_csvs:
-        add_info_from_name(csv_data)
-        simulation_name = csv_data.header_info["ODB name"].rsplit("_Main")[0]
-        if simulation_name not in color_map:
-            color_map[simulation_name] = colors[len(color_map) % len(colors)]
-
-        processed_df = process_csv_file_in_folder(
-            csv_data,
-            fig,
-            color_map[simulation_name],
-        )
-
+        add_general_info_from_file_name(csv_data)
+        processed_df = process_csv_file_in_folder(csv_data)
         summary_df = pd.concat([summary_df, processed_df])
 
+    plot_csv_data(list_of_csvs)
 
-    fig.update_layout(height=1600, width=1600)
-    fig.show()
 
     return summary_df
 
 
-def process_csv_file_in_folder(csv_data, fig, color) -> pd.DataFrame:
+def process_csv_file_in_folder(csv_data) -> pd.DataFrame:
     """ Selects the rows at the peaks and dips of the 'Moment' column within the 'Trawl' step of the CSV data.
     Returns the line at the peaks and dips of the 'Moment' column within the 'Trawl' step. """
 
     df = csv_data.df
-
-
     step = df[df["Step name"] == "Trawl"]
 
     thr = None
@@ -88,25 +73,44 @@ def process_csv_file_in_folder(csv_data, fig, color) -> pd.DataFrame:
     csv_data.peak_index = np.sort(np.r_[peaks, dips])
 
     line_at_peak = df.iloc[csv_data.peak_index].copy()
-    plot_results(fig, step["Displacement"], step["End1 RF1 Force"], csv_data.metadata, csv_data.header_info, csv_data.peak_index, color, row=1, col=1)
-    plot_results(fig, step["Wire force"], step["Moment"], csv_data.metadata, csv_data.header_info, csv_data.peak_index, color, row=2, col=1)
-    plot_results(fig, step["ESF1"], step["Moment"], csv_data.metadata, csv_data.header_info, csv_data.peak_index, color, row=3, col=1)
 
     info_df = pd.DataFrame(
         [csv_data.general_info] * len(line_at_peak),
         index=line_at_peak.index,
     )
     return_line = pd.concat([info_df, line_at_peak], axis=1)
-
+    csv_data.write_to_csv = return_line
     return return_line
 
 
 
 
-def add_info_from_name(csv_data):
-    general_info = extract_info(csv_data.header_info["ODB name"])
-    general_info["Sim ID"] = csv_data.header_info["ODB name"].rsplit("_Main")[0]
+def add_general_info_from_file_name(csv_data):
+    clean_file_name = csv_data.header_info["ODB name"].rsplit("_Main")[0]
+    general_info = extract_info(clean_file_name)
+    general_info["Sim ID"] = clean_file_name
     csv_data.add_general_info(**general_info)
+
+
+def plot_csv_data(list_of_csvs):
+
+    fig = make_subplots(rows=3, cols=1, vertical_spacing=0.08)
+    colors = qualitative.Plotly
+    color_map = {}
+
+    for csv_data in list_of_csvs:
+        simulation_name = csv_data.general_info["Sim ID"]
+        step = csv_data.df[csv_data.df["Step name"] == "Trawl"]
+
+        if simulation_name not in color_map:
+            color_map[simulation_name] = colors[len(color_map) % len(colors)]
+
+        plot_results(fig, step["Displacement"], step["End1 RF1 Force"], csv_data.metadata, csv_data.header_info, csv_data.peak_index, color_map[simulation_name], row=1, col=1)
+        plot_results(fig, step["Wire force"], step["Moment"], csv_data.metadata, csv_data.header_info, csv_data.peak_index, color_map[simulation_name], row=2, col=1)
+        plot_results(fig, step["ESF1"], step["Moment"], csv_data.metadata, csv_data.header_info, csv_data.peak_index, color_map[simulation_name], row=3, col=1)
+
+    fig.update_layout(height=1600, width=1600)
+    fig.show()
 
 
 if __name__ == "__main__":
