@@ -16,7 +16,6 @@ def get_input_from_args_or_dialog(default_folder):
                     [
                         os.path.join(path, f)
                         for f in os.listdir(path)
-                        if f.lower().endswith('.csv') and 'beamTrawlingRes' in f
                     ]
                 )
             elif os.path.isfile(path):
