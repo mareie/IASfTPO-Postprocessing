@@ -10,14 +10,17 @@ import os
 
 import numpy as np
 import pandas as pd
-import plotly.graph_objects as go
 from plotly.colors import qualitative
 from plotly.subplots import make_subplots
 from scipy.signal import find_peaks
 
 from modules.csv_data import CsvData
-from utils.readAndWrite import check_input_and_get_files, get_input_from_args_or_dialog
-from utils.utils import extract_info, write_to_csv
+from utils.readAndWrite import (
+    check_input_and_get_files,
+    get_input_from_args_or_dialog,
+    write_to_csv,
+)
+from utils.utils import extract_info, plot_results
 
 debug = False
 
@@ -98,47 +101,6 @@ def process_csv_file_in_folder(csv_data, fig, color) -> pd.DataFrame:
     return return_line
 
 
-def plot_results(fig, x, y, md, header_info, peaks, color, row=None, col=None):
-
-    trace_name = f"{header_info['ODB name'].rsplit('_Main')[0]}"
-    trace = go.Scatter(
-        x=x,
-        y=y,
-        mode="lines",
-        name=trace_name,
-        line={"color": color},
-        legendgroup=trace_name,
-        hovertemplate=f"x: %{{x}}<br>y: %{{y}}<extra>{trace_name}</extra>",
-        showlegend=row is None or row == 1,
-    )
-    if row is None or col is None:
-        fig.add_trace(trace)
-    else:
-        fig.add_trace(trace, row=row, col=col)
-
-    peak_trace = go.Scatter(
-        x=x.iloc[peaks],
-        y=y.iloc[peaks],
-        # mode="markers+text",
-        marker={"color": "red"},
-        # text=[f"y: {y.iloc[peak]:.0f}" for peak in peaks],
-        # textposition="top center",
-        name="Peaks",
-        hovertemplate=f"x: %{{x}}<br>y: %{{y}}<extra>{trace_name}</extra>",
-        legendgroup=trace_name,
-        showlegend=False,
-    )
-    if row is None or col is None:
-        fig.add_trace(peak_trace)
-        fig.update_layout(
-            xaxis_title=f'{md[x.name]["description"]}',
-            yaxis_title=f'{md[y.name]["description"]}',
-            title=f"{x.name} vs {y.name}",
-        )
-    else:
-        fig.add_trace(peak_trace, row=row, col=col)
-        fig.update_xaxes(title_text=f'{md[x.name]["description"]}', row=row, col=col)
-        fig.update_yaxes(title_text=f'{md[y.name]["description"]}', row=row, col=col)
 
 
 def add_info_from_name(csv_data):
@@ -155,28 +117,3 @@ if __name__ == "__main__":
         print("No input selected. Exiting.")
     else:
         main(selected_input)
-
-
-
-
-
-
-def extract_and_rename_peaks_to_dataframe(df, peak_indices, governing=False):
-    """
-    Extract peak data as a single row with multiple peaks across columns.
-
-    Returns one row per simulation with columns like: Peak1_ESF1, Peak2_ESF1, etc.
-    """
-    peak_name = lambda n, col: f"Peak{n}_{col}"
-    gov_name = lambda _, col: f"Gov_{col}"
-    name_fn = gov_name if governing else peak_name
-
-    peaks_df = df.iloc[peak_indices].reset_index(drop=True)
-    peaks_df.index += 1
-    peaks_df = (
-        peaks_df.stack()
-        .to_frame()
-        .T.pipe(lambda x: x.set_axis([name_fn(n, col) for n, col in x.columns], axis=1))
-    )
-
-    return peaks_df
