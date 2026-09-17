@@ -4,6 +4,15 @@ import pandas as pd
 
 
 class CsvData:
+    """Class representing CSV data along with its metadata, header information, and general information.
+    Attributes:
+        df (pd.DataFrame): The DataFrame containing the CSV data.
+        filepath (Path): The path to the CSV file.
+        metadata (dict): Info and description associated with each column.
+        header_info (dict): Header information extracted from the CSV file.
+        general_info (dict): General information related to the CSV data.
+    """
+
     def __init__(self, df, filepath=None, metadata=None, header_info=None, general_info=None):
         self.df = df
         self.filepath = Path(filepath) if filepath else None

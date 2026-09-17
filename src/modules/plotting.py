@@ -7,7 +7,7 @@ def plot_csv_data(list_of_csvs):
 
 
     fig = make_subplots(rows=3, cols=1, vertical_spacing=0.08)
-    colors = qualitative.Plotly
+    colors = qualitative.G10
     color_map = {}
 
     for csv_data in list_of_csvs:

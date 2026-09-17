@@ -2,6 +2,14 @@ import re
 
 
 def extract_info(simID: str) -> dict:
+    """Extracts general information from the simulation ID string.
+
+    Args:
+        simID (str): The simulation ID string from which to extract information.
+
+    Returns:
+        dict: A dictionary containing the extracted information.
+    """
     patterns = {
         "D/t": r"Dt([^_]+)",
         "Qh": r"qh([^_]+)",
@@ -28,6 +36,11 @@ def extract_info(simID: str) -> dict:
 
 
 def add_general_info_from_file_name(csv_data):
+    """Adds general information extracted from the file name to the CSV data object.
+
+    Args:
+        csv_data: The CSV data object to which the general information will be added.
+    """
     clean_file_name = csv_data.filepath.name.rsplit("_Main")[0]
     general_info = extract_info(clean_file_name)
     general_info["Sim ID"] = clean_file_name

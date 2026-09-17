@@ -25,8 +25,9 @@ def get_input_from_args_or_dialog(default_folder):
         return selected_files
 
     user_input = input(
-        'Select input type: [d] folder (default), [f] files, [n] use default folder. '
-        'Press enter for folder selection. (ctrl + c to exit script) '
+        f'Default folder: {default_folder}\n'
+        'Select input type: [D] select folder, [f] select files, [n] use default folder (ctrl + c to exit script):'
+
     ).strip().lower()
 
     if user_input == 'n':
@@ -83,6 +84,14 @@ def filter_files(folder, exclusion_files, inclusion_files=None):
 
 
 def write_to_csv(out_csv, df, sep=";", mode="x"):
+    """ Write a DataFrame to a CSV file.
+
+    Args:
+        out_csv (str): The output CSV file path.
+        df (pd.DataFrame): The DataFrame to write.
+        sep (str, optional): The separator to use in the CSV file. Defaults to ";".
+        mode (str, optional): The file mode. Defaults to "x" (create a new file).
+    """
     try:
         df.to_csv(out_csv, index=False, sep=sep, mode=mode)
         print("File written successfully")
