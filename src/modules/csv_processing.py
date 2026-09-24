@@ -32,9 +32,10 @@ def process_csv_file(csv_data, savefile=False) -> pd.DataFrame:
 
     thr = None
     peaks, _ = find_peaks(step["Moment"], height=thr)
-    dips, _ = find_peaks(-step["Moment"], height=thr)
+    # dips, _ = find_peaks(-step["Moment"], height=thr)
 
-    csv_data.peak_index = np.sort(np.r_[peaks, dips])
+    # csv_data.peak_index = np.sort(np.r_[peaks, dips])
+    csv_data.peak_index = peaks
 
     line_at_peak = df.iloc[csv_data.peak_index].copy()
 
