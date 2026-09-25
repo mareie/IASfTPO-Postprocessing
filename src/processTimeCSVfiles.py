@@ -9,7 +9,7 @@ import datetime
 import os
 
 from modules.csv_data import CsvData
-from modules.csv_processing import process_csv_files
+from modules.csv_processing import process_time_csv_files
 from utils.readAndWrite import (
     check_input_and_get_files,
     get_input_from_args_or_dialog,
@@ -25,7 +25,7 @@ def main(input_path_or_files):
     filtered_files = check_input_and_get_files(input_path_or_files, outName)
     list_of_csvs = [CsvData.from_file(file) for file in filtered_files]
 
-    out_df = process_csv_files(list_of_csvs)
+    out_df = process_time_csv_files(list_of_csvs)
 
 
     current_folder = os.getcwd()
@@ -38,7 +38,7 @@ def main(input_path_or_files):
 
 
 if __name__ == "__main__":
-    default_folder = r"\\osl5207.verit.dnv.com\beegfs-hpc_lagu_rp_osl\sign\mareie\IAS\CSV"
+    default_folder = r"\\osl5207.verit.dnv.com\beegfs-hpc_lagu_rp_osl\sign\mareie\IAS\CSV_time"
     selected_input = get_input_from_args_or_dialog(default_folder)
 
     if not selected_input:
