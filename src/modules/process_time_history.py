@@ -83,20 +83,19 @@ def process_time_history_Mcap(df, pipe_info, safety_factor=1):
     return df['Mcap_L_1p2p2_kNm']
 
 
-def process_time_history_g_hat(th_df, pipe_info, th_df_derived) -> pd.DataFrame:
+def process_time_history_g_hat(moment, wireforce, pipe):
     """
     returns a new pd.DataFrame with only the derived parameters and the calculated g_hat, which can be merged with the original time history dataframe if needed.
     """
 
-    org_columns = th_df.columns.tolist()
 
-    th_df = th_df.assign(Ry_kN = 3.9 * pipe_info['YS'] * pipe_info['WT']**2 / 1000) # default is inplace = False, so this creates a new dataframe with the new column, which is what we want here to avoid modifying the original dataframe
+    Ry_kN = 3.9 * pipe.ys * pipe.wt**2 / 1000  # default is inplace = False, so this creates a new dataframe with the new column, which is what we want here to avoid modifying the original dataframe
 
     #th_df['Ry_kN'] = 3.9 * pipe_info['YS'] * pipe_info['WT']**2 / 1000
-    th_df['Q_kN'] = 2 * th_df['Wire force']                         # multiply by 2 to get total force on pipe, not just force on one side
-    th_df['Q/Ry'] = th_df['Q_kN'] / th_df['Ry_kN']
+    q_kN = wireforce                    # multiply by 2 to get total force on pipe, not just force on one side
+    q_by_ry = q_kN / Ry_kN
 
-    moment_term = th_df_derived['M/Mpc']
-    th_df['g_hat'] = calculate_utilization_g_hat(moment_term, th_df['Q/Ry'], pipe_info['D/t'], pipe_info['delta_P/Pb'])
+    moment_term = moment / pipe.mpc
+    g_hat = calculate_utilization_g_hat(moment_term, q_by_ry, pipe.D_t, pipe.delta_P_Pb)
 
-    return th_df.drop(columns=org_columns)
+    return g_hat

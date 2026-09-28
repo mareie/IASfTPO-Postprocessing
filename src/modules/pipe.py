@@ -15,10 +15,10 @@ class Pipe:
         qh=0,
     ):
         self.od = outer_diameter
-        self.th = wall_thickness
+        self.wt = wall_thickness
         self.ys = yield_strength
         self.ts = tensile_strength
-        self.D_t = d_over_t if d_over_t is not None else self.od / self.th
+        self.D_t = d_over_t if d_over_t is not None else self.od / self.wt
         self.ys_ts = ys_ts if ys_ts is not None else self.ys / self.ts
         self.qh = qh
 
@@ -26,10 +26,10 @@ class Pipe:
         self.beta = (60 - self.D_t) / 90
         self.alpha_c = 1 + self.beta * (self.ys_ts**-1 - 1)
 
-        self.mp = self.ys * (self.od - self.th)**2 * self.th  # Plastic moment
+        self.mp = self.ys * (self.od - self.wt)**2 * self.wt  # Plastic moment
         self.mpc = self.alpha_c * self.mp  # Plastic moment capacity included hardening
 
-        self.sp = self.ys * math.pi * (self.od - self.th) * self.th  # Axial plastic capacity
+        self.sp = self.ys * math.pi * (self.od - self.wt) * self.wt  # Axial plastic capacity
         self.spc = self.alpha_c * self.sp  # Axial plastic capacity included hardening
 
         self.delta_P_Pb = math.sqrt(3) / 2  * self.qh
