@@ -2,14 +2,14 @@ import pandas as pd
 
 
 def process_peaks(df, qh, peak_indices) -> pd.DataFrame:
-    LOOK_AHEAD = { 'Qh_cutoff': 0.4, 'steps_ahead_low_qh': 5, 'steps_ahead_high_qh': 20 }   # Dictionary to determine look-ahead steps based on Qh value
+    LOOK_AHEAD = { 'Qh_cutoff': 0.4, 'steps_ahead_low_qh': 30, 'steps_ahead_high_qh': 20 }   # Dictionary to determine look-ahead steps based on Qh value
     if qh < LOOK_AHEAD['Qh_cutoff']:
         steps_ahead = LOOK_AHEAD['steps_ahead_low_qh']
     else:
         steps_ahead = LOOK_AHEAD['steps_ahead_high_qh']
 
 
-    columns_to_exctract_at_peak = ['StepTime', 'Wire force', 'ESF1', 'Moment', 'Max ovalization in sections', 'LE.LE11', 'g_hat']
+    columns_to_extract_at_peak = ['StepTime', 'Wire force', 'ESF1', 'Moment', 'Max ovalization in sections', 'LE.LE11', 'Lateral Displacement', 'g_hat', 'LCC utilization']
 
     if peak_indices.size == 0:
         print(f"No peaks found for {df['SimID'].iloc[0]}.")
@@ -17,15 +17,15 @@ def process_peaks(df, qh, peak_indices) -> pd.DataFrame:
         # row_at_value_of_interest = pd.concat([save_file_df], axis=1)
         # return pd.DataFrame(row_at_value_of_interest)
 
-    peak_values_df = extract_and_rename_peaks_to_dataframe(df[columns_to_exctract_at_peak], peak_indices)
+    peak_values_df = extract_and_rename_peaks_to_dataframe(df[columns_to_extract_at_peak], peak_indices)
 
     governing_results = pd.DataFrame()
     for index, peak in enumerate(peak_indices, 1):
         if check_future_trend(df['grad(M/LE.LE11)'], peak, look_ahead=steps_ahead):
-            governing_results = extract_and_rename_peaks_to_dataframe(df[columns_to_exctract_at_peak], [peak], governing=True)
+            governing_results = extract_and_rename_peaks_to_dataframe(df[columns_to_extract_at_peak], [peak], governing=True)
             governing_results['PeakNumber'] = index
             break
-        governing_results = extract_and_rename_peaks_to_dataframe(df[columns_to_exctract_at_peak], [peak], governing=True)
+        governing_results = extract_and_rename_peaks_to_dataframe(df[columns_to_extract_at_peak], [peak], governing=True)
         governing_results['PeakNumber'] = 'None'
 
 

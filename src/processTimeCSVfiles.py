@@ -20,7 +20,7 @@ debug = False
 
 
 def main(input_path_or_files):
-    outName = datetime.datetime.now().strftime("%Y-%m-%d") + "_summary_Mmax" ".csv"
+    outName = datetime.datetime.now().astimezone().strftime("%Y-%m-%d") + "_summary_Mmax" ".csv"
 
     filtered_files = check_input_and_get_files(input_path_or_files, outName)
     list_of_csvs = [CsvData.from_file(file) for file in filtered_files]
