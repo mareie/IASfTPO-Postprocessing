@@ -11,14 +11,17 @@ class CsvData:
         metadata (dict): Info and description associated with each column.
         header_info (dict): Header information extracted from the CSV file.
         general_info (dict): General information related to the CSV data.
+        pipe (optional): Associated pipe object, if any.
     """
 
     def __init__(self, df, filepath=None, metadata=None, header_info=None, general_info=None):
-        self.df = df
+        self.source_df = df.copy(deep=True)
+        self.df = df.copy(deep=True)
         self.filepath = Path(filepath) if filepath else None
         self.metadata = metadata
         self.header_info = header_info
         self.general_info = general_info or {}
+        self.pipe = None
 
     @classmethod
     def from_file(cls, filepath, sep=";", headers=True):
@@ -84,8 +87,12 @@ class CsvData:
             "description": description,
         }
 
-    def save_to_csv(self, output_path, sep=";"):
-        cols = list(self.df.columns)
+    def attach_pipe(self, pipe):
+        self.pipe = pipe
+
+    def save_to_csv(self, output_path, sep=";", columns=None):
+        cols = list(self.df.columns) if columns is None else list(columns)
+        output_df = self.df[cols]
 
         sim_header = list(self.header_info.keys())
         sim_values = [self.header_info[k] for k in sim_header]
@@ -99,6 +106,6 @@ class CsvData:
             f.write(sep.join(map(str, cols)) + "\n")
             f.write(sep.join(map(str, info_row)) + "\n")
             f.write(sep.join(map(str, desc_row)) + "\n")
-            self.df.to_csv(
+            output_df.to_csv(
                 f, index=False, header=False, sep=sep, lineterminator="\n"
             )
