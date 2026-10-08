@@ -76,7 +76,7 @@ class Pipe:
         return self._require_capacity().mpc
 
     @property
-    def delta_P_Pb(self):
+    def delta_p_pb(self):
         return self._require_capacity().delta_p_pb
 
     def print_capacity_parameters(self):
