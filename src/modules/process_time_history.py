@@ -3,6 +3,7 @@ from dataclasses import asdict
 
 import numpy as np
 import pandas as pd
+from scipy.signal import find_peaks
 
 from modules.code_check import calculate_utilization_factor_STF101
 from modules.peak_processing import process_peaks
@@ -16,22 +17,6 @@ kN_TO_N = 1e3
 kNm_TO_NM = 1e3
 
 
-def convert_units(df: pd.DataFrame) -> pd.DataFrame:
-    df['Moment'] = df['Moment'] * kNm_TO_NM
-    df['ESF1'] = df['ESF1'] * kN_TO_N
-    return df
-
-def convert_units_info(df):
-    df['YS'] = df['YS'] * MPA_TO_PA
-    df['TS'] = df['TS'] * MPA_TO_PA
-    df['WT'] = df['WT'] * MM_TO_M
-    df['Nom YS'] = df['Nom YS'] * MPA_TO_PA
-    df['Nom TS'] = df['Nom TS'] * MPA_TO_PA
-    df['Nom WT'] = df['Nom WT'] * MM_TO_M
-    return df
-
-
-
 def process_time_csv_file(csv_data, savefile=True) -> pd.DataFrame:
     """ Selects the rows at the peaks and dips of the 'Moment' column within the 'Trawl' step of the CSV data.
     Returns the line at the peaks and dips of the 'Moment' column within the 'Trawl' step. """
@@ -42,6 +27,9 @@ def process_time_csv_file(csv_data, savefile=True) -> pd.DataFrame:
     derived_df = calculate_derived_columns(df, pipe, capacity)
     add_derived_columns(csv_data, derived_df)
 
+    thr = None
+    peaks, _ = find_peaks(df["Moment"], height=thr)
+    csv_data.peak_index = peaks
     line_at_peaks = process_peaks(df, csv_data.general_info['Qh'], csv_data.peak_index)
 
 
@@ -71,15 +59,13 @@ def process_time_history_g_hat(moment, wire_force, pipe, capacity):
     returns a new pd.DataFrame with only the derived parameters and the calculated g_hat, which can be merged with the original time history dataframe if needed.
     """
 
+    Ry_kN = 3.9 * pipe.ys * pipe.wt**2 / 1000
 
-    Ry_kN = 3.9 * pipe.ys * pipe.wt**2 / 1000  # default is inplace = False, so this creates a new dataframe with the new column, which is what we want here to avoid modifying the original dataframe
-
-    #th_df['Ry_kN'] = 3.9 * pipe_info['YS'] * pipe_info['WT']**2 / 1000
-    q_kN = wire_force                    # multiply by 2 to get total force on pipe, not just force on one side
+    q_kN = wire_force
     q_by_ry = q_kN / Ry_kN
 
     moment_term = moment / pipe.mpc
-    g_hat = calculate_utilization_g_hat(moment_term, q_by_ry, capacity.D_t, capacity.delta_P_Pb)
+    g_hat = calculate_utilization_g_hat(moment_term, q_by_ry, pipe.D_t, capacity.delta_p_pb)
 
     return g_hat
 
@@ -96,8 +82,8 @@ def extract_g_hat_failure_info(df, columns_to_extract_at_g_hat_1: list[str]):
 
 
 def calculate_derived_columns(df, pipe, capacity) -> pd.DataFrame:
-    g_hat = process_time_history_g_hat(df["Moment"] * 1000, df["Wire force"], pipe, capacity)
 
+    g_hat = process_time_history_g_hat(df["Moment"] * 1000, df["Wire force"], pipe, capacity)
     gradient = np.gradient(df['Moment'], df['LE.LE11']) # Gradient is better than diff due to same length of values and better handling of noise. Might change to savgol filter later if we want to smooth it out more.
 
     moment_term = df['Moment'] * 1000 / capacity.mpc
